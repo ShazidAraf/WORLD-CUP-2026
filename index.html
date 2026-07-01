@@ -244,6 +244,8 @@
   table.stand td.num{text-align:center;font-variant-numeric:tabular-nums;font-size:12px;color:var(--dim);}
 
   .live-dot{color:var(--amber);font-size:9px;vertical-align:middle;}
+  .sc-row.waiting{opacity:.92;}
+  .sc-row .await{font-family:var(--cond);font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--dim);}
   /* tie-break reorder controls */
   .modeseg{display:inline-flex;border:1px solid var(--edge);border-radius:8px;overflow:hidden;vertical-align:middle;}
   .mseg{font-family:var(--cond);font-size:12px;letter-spacing:.04em;text-transform:uppercase;padding:8px 13px;background:transparent;color:var(--dim);border:none;cursor:pointer;}
@@ -927,6 +929,10 @@ function label(f){
  if('lose' in f)return 'Loser M'+f.lose;
 }
 function teamPh(f){return `<div class="ko-ph">${label(f)}</div>`;}
+function koHalf(t,F){
+ const side=(id,f)=> id ? `<div class="sc-row waiting"><span class="sc-tm"><span class="fl">${TEAMS[id].fl}</span>${TEAMS[id].nm}</span><span class="await">awaiting opponent</span></div>` : teamPh(f);
+ return side(t[0],F.a)+side(t[1],F.b);
+}
 function stepperK(n,side,val){return `<span class="stepper"><button class="sbtn" data-ks="${n}" data-side="${side}" data-d="-1">\u2212</button><span class="sval">${val==null?'\u2013':val}</span><button class="sbtn" data-ks="${n}" data-side="${side}" data-d="1">+</button></span>`;}
 function koScoreBody(n,t){
  const s=koScore[n];const gh=s?s[0]:null,ag=s?s[1]:null;const win=koWinner(n);
@@ -945,7 +951,7 @@ function koAdvBody(n,t){
 function kcard(n,tag){
  const F=KOFEED[n],t=teamsOf(n),active=!!(t[0]&&t[1]),m=KO[n];
  const bar=active?probBar(TEAMS[t[0]].nm,TEAMS[t[1]].nm,true):'';
- const f=mfmt(m.d,m.t);const body=active?(mode==='manual'?koAdvBody(n,t):koScoreBody(n,t)):(teamPh(F.a)+teamPh(F.b));
+ const f=mfmt(m.d,m.t);const body=active?(mode==='manual'?koAdvBody(n,t):koScoreBody(n,t)):koHalf(t,F);
  return `<div class="kcard ${active?'live':''}${dcls(m.d,m.t)}"><div class="mhead"><span>${tag} · M${n}</span><span class="vn">${m.v}</span></div>${body}${bar}<div class="when"><b>${f.time} ${f.abbr}</b> · ${f.day}</div></div>`;
 }
 function buildSide(spec,cls){
@@ -961,12 +967,12 @@ function buildSide(spec,cls){
 }
 function finalCard(){
  const F=KOFEED[104],t=teamsOf(104),active=!!(t[0]&&t[1]),m=KO[104];
- const f=mfmt(m.d,m.t);const body=active?(mode==='manual'?koAdvBody(104,t):koScoreBody(104,t)):(teamPh(F.a)+teamPh(F.b));
+ const f=mfmt(m.d,m.t);const body=active?(mode==='manual'?koAdvBody(104,t):koScoreBody(104,t)):koHalf(t,F);
  return `<div class="final-card${dcls(m.d,m.t)}"><div class="trophy">🏆</div><div class="t">The Final</div>${body}<div class="when">${f.time} ${f.abbr} · ${f.day}<small>${m.v}</small></div></div>`;
 }
 function bronzeCard(){
  const F=KOFEED[103],t=teamsOf(103),active=!!(t[0]&&t[1]),m=KO[103];
- const f=mfmt(m.d,m.t);const body=active?(mode==='manual'?koAdvBody(103,t):koScoreBody(103,t)):(teamPh(F.a)+teamPh(F.b));
+ const f=mfmt(m.d,m.t);const body=active?(mode==='manual'?koAdvBody(103,t):koScoreBody(103,t)):koHalf(t,F);
  return `<div class="bronze${dcls(m.d,m.t)}"><div class="t">Third-place · M103</div>${body}<div class="when">${f.time} ${f.abbr} · ${f.day} · ${m.v}</div></div>`;
 }
 function renderBracket(){
