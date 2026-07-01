@@ -311,7 +311,7 @@
   <div class="modeseg"><button class="mseg on" id="mLive" data-ctl="modelive">⚽ Live scores</button><button class="mseg" id="mManual" data-ctl="modemanual">✋ Manual</button></div>
   <label class="datectl" title="Show kick-off times in this timezone">🕑 <select id="tzSelect"></select></label>
   <button class="btn" data-ctl="search">🔍 Search</button>
-  <button class="btn gold" data-ctl="loadresults" title="Fetch the latest scores from the live feed and fill the tables — falls back to built-in results (through 19 Jun) if offline or opened as a local file">🔄 Update results</button>
+  <button class="btn gold" data-ctl="loadresults" title="Fetch the latest scores from the live feed and fill the tables — falls back to built-in final results (through 27 Jun) if offline or opened as a local file">🔄 Update results</button>
   <button class="btn" data-ctl="rand">🎲 Randomise groups</button>
   <button class="btn" data-ctl="autolikely" title="Fill every undecided match with the single most likely result — the favourite always advances and there are no draws (a reproducible 'chalk' bracket)">📈 Most likely</button>
   <button class="btn gold" data-ctl="autoodds" title="Fill every undecided match by sampling from its model odds — favourites usually advance, upsets and draws happen in proportion">🎯 Auto-pick by odds</button>
@@ -685,7 +685,14 @@ function computeGroup(L){
 /* third-place R32 slot assignment (valid bipartite matching) */
 const SLOTS=[{m:74,s:'ABCDF'},{m:77,s:'CDFGH'},{m:79,s:'CEFHI'},{m:80,s:'EHIJK'},
              {m:81,s:'BEFIJ'},{m:82,s:'AEHIJ'},{m:85,s:'EFGIJ'},{m:87,s:'DEIJL'}];
+const THIRD_ALLOC={
+ // FIFA 2026 Annex C — official third-place allocation (key = the 8 qualifying groups, sorted).
+ // matchNo -> group whose 3rd-placed team fills that slot.
+ 'BDEFIJKL':{74:'D',77:'F',79:'E',80:'K',81:'B',82:'I',85:'J',87:'L'}
+};
 function assignThirds(Q){
+ const key=Q.slice().sort().join('');
+ if(THIRD_ALLOC[key])return Object.assign({},THIRD_ALLOC[key]); // exact official pairing
  const slots=SLOTS.map(s=>({m:s.m,cand:s.s.split('').filter(c=>Q.indexOf(c)>-1)}))
                   .sort((a,b)=>a.cand.length-b.cand.length);
  const res={},used={};
@@ -763,20 +770,20 @@ function searchKoCard(x){
  const bar=active?probBar(TEAMS[t[0]].nm,TEAMS[t[1]].nm,true):'';
  return `<div class="sr-row"><div class="sr-meta">${f.day} · ${f.time} ${f.abbr} · ${x.venue} <span class="sr-round">${x.label}</span></div>${body}${bar}</div>`;
 }
-/* Group-stage results played through 19 June 2026 (source: official scores). [group, teamA, gA, teamB, gB] */
+/* Final group-stage results — all 72 matches, through 27 June 2026 (source: official scores). [group, teamA, gA, teamB, gB] */
 const RESULTS=[
- ['A','Mexico',2,'South Africa',0],['A','South Korea',2,'Czechia',1],['A','Czechia',1,'South Africa',1],['A','Mexico',1,'South Korea',0],
- ['B','Canada',1,'Bosnia & Herz.',1],['B','Switzerland',1,'Qatar',1],['B','Switzerland',4,'Bosnia & Herz.',1],['B','Canada',6,'Qatar',0],
- ['C','Brazil',1,'Morocco',1],['C','Scotland',1,'Haiti',0],['C','Morocco',1,'Scotland',0],['C','Brazil',3,'Haiti',0],
- ['D','United States',4,'Paraguay',1],['D','Australia',2,'Türkiye',0],['D','United States',2,'Australia',0],
- ['E','Germany',7,'Curaçao',1],['E','Ivory Coast',1,'Ecuador',0],
- ['F','Netherlands',2,'Japan',2],['F','Sweden',5,'Tunisia',1],
- ['G','Belgium',1,'Egypt',1],['G','Iran',2,'New Zealand',2],
- ['H','Spain',0,'Cape Verde',0],['H','Saudi Arabia',1,'Uruguay',1],
- ['I','France',3,'Senegal',1],['I','Norway',4,'Iraq',1],
- ['J','Argentina',3,'Algeria',0],['J','Austria',3,'Jordan',1],
- ['K','Portugal',1,'DR Congo',1],['K','Colombia',3,'Uzbekistan',1],
- ['L','England',4,'Croatia',2],['L','Ghana',1,'Panama',0]
+ ['A','Mexico',2,'South Africa',0],['A','South Korea',2,'Czechia',1],['A','Czechia',1,'South Africa',1],['A','Mexico',1,'South Korea',0],['A','Czechia',0,'Mexico',3],['A','South Africa',1,'South Korea',0],
+ ['B','Canada',1,'Bosnia & Herz.',1],['B','Qatar',1,'Switzerland',1],['B','Switzerland',4,'Bosnia & Herz.',1],['B','Canada',6,'Qatar',0],['B','Switzerland',2,'Canada',1],['B','Bosnia & Herz.',3,'Qatar',1],
+ ['C','Brazil',1,'Morocco',1],['C','Haiti',0,'Scotland',1],['C','Scotland',0,'Morocco',1],['C','Brazil',3,'Haiti',0],['C','Scotland',0,'Brazil',3],['C','Morocco',4,'Haiti',2],
+ ['D','United States',4,'Paraguay',1],['D','Australia',2,'Türkiye',0],['D','United States',2,'Australia',0],['D','Türkiye',0,'Paraguay',1],['D','Türkiye',3,'United States',2],['D','Paraguay',0,'Australia',0],
+ ['E','Germany',7,'Curaçao',1],['E','Ivory Coast',1,'Ecuador',0],['E','Germany',2,'Ivory Coast',1],['E','Ecuador',0,'Curaçao',0],['E','Curaçao',0,'Ivory Coast',2],['E','Ecuador',2,'Germany',1],
+ ['F','Netherlands',2,'Japan',2],['F','Sweden',5,'Tunisia',1],['F','Netherlands',5,'Sweden',1],['F','Tunisia',0,'Japan',4],['F','Japan',1,'Sweden',1],['F','Tunisia',1,'Netherlands',3],
+ ['G','Belgium',1,'Egypt',1],['G','Iran',2,'New Zealand',2],['G','Belgium',0,'Iran',0],['G','New Zealand',1,'Egypt',3],['G','Egypt',1,'Iran',1],['G','New Zealand',1,'Belgium',5],
+ ['H','Spain',0,'Cape Verde',0],['H','Saudi Arabia',1,'Uruguay',1],['H','Spain',4,'Saudi Arabia',0],['H','Uruguay',2,'Cape Verde',2],['H','Cape Verde',0,'Saudi Arabia',0],['H','Uruguay',0,'Spain',1],
+ ['I','France',3,'Senegal',1],['I','Iraq',1,'Norway',4],['I','France',3,'Iraq',0],['I','Norway',3,'Senegal',2],['I','Norway',1,'France',4],['I','Senegal',5,'Iraq',0],
+ ['J','Argentina',3,'Algeria',0],['J','Austria',3,'Jordan',1],['J','Argentina',2,'Austria',0],['J','Jordan',1,'Algeria',2],['J','Algeria',3,'Austria',3],['J','Jordan',1,'Argentina',3],
+ ['K','Portugal',1,'DR Congo',1],['K','Uzbekistan',1,'Colombia',3],['K','Portugal',5,'Uzbekistan',0],['K','Colombia',1,'DR Congo',0],['K','Colombia',0,'Portugal',0],['K','DR Congo',3,'Uzbekistan',1],
+ ['L','England',4,'Croatia',2],['L','Ghana',1,'Panama',0],['L','England',0,'Ghana',0],['L','Panama',0,'Croatia',1],['L','Panama',0,'England',2],['L','Croatia',2,'Ghana',1]
 ];
 const LIVE_URL='https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json';
 const NAMEMAP={'Czech Republic':'Czechia','Bosnia & Herzegovina':'Bosnia & Herz.','Turkey':'Türkiye','USA':'United States','Korea Republic':'South Korea','Cabo Verde':'Cape Verde',"Côte d'Ivoire":'Ivory Coast'};
@@ -808,7 +815,7 @@ async function updateResults(){
   setLive('✓ Live feed · '+r.count+' results'+(r.through?' '+r.through:''),'ok');
  }catch(e){
   applyResults();
-  setLive('⚠ Live feed unreachable — loaded built-in results (through 19 Jun). Host the page online for live fetch.','warn');
+  setLive('⚠ Live feed unreachable — loaded built-in final group results (through 27 Jun). Host the page online for live fetch.','warn');
  }
 }
 function applyResults(){
